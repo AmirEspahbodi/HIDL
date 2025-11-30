@@ -4,22 +4,20 @@ import { DataRow } from '../types';
 interface DataRowItemProps {
   row: DataRow;
   onUpdateExpertOpinion: (id: number, opinion: string) => void;
+  gridTemplateColumns: string; // Recieves the dynamic layout
 }
 
-export const DataRowItem: React.FC<DataRowItemProps> = ({ row, onUpdateExpertOpinion }) => {
+export const DataRowItem: React.FC<DataRowItemProps> = ({ row, onUpdateExpertOpinion, gridTemplateColumns }) => {
   const [expanded, setExpanded] = useState(false);
   
-  // State for Expert Opinion editing
   const [isEditingOpinion, setIsEditingOpinion] = useState(false);
   const [opinionText, setOpinionText] = useState(row.expert_opinion);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Sync opinion text when row data updates from parent
   useEffect(() => {
     setOpinionText(row.expert_opinion);
   }, [row.expert_opinion]);
 
-  // Focus textarea when editing starts
   useEffect(() => {
     if (isEditingOpinion && textareaRef.current) {
       textareaRef.current.focus();
@@ -31,7 +29,6 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({ row, onUpdateExpertOpi
       e.preventDefault();
       return;
     }
-    // Convert ID to string for transfer
     e.dataTransfer.setData("text/plain", row.id.toString());
     e.dataTransfer.effectAllowed = "move";
     
@@ -46,7 +43,6 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({ row, onUpdateExpertOpi
 
   const toggleExpand = () => setExpanded(!expanded);
 
-  // Expert Opinion Handlers
   const handleSaveOpinion = () => {
     setIsEditingOpinion(false);
     if (opinionText !== row.expert_opinion) {
@@ -61,97 +57,98 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({ row, onUpdateExpertOpi
     }
   };
 
-  const textCellStyle = `px-4 py-3 text-sm text-slate-700KP transition-all duration-300 ${
+  // Styles
+  const baseCell = "px-4 py-3 text-sm transition-all duration-300 border-r border-transparent";
+  const textCellStyle = `${baseCell} text-slate-700 ${
     expanded ? 'whitespace-normal break-words' : 'whitespace-nowrap overflow-hidden text-ellipsis'
   }`;
-  
-  const scoreCellStyle = "px-4 py-3 text-sm text-slate-500 font-mono text-right";
+  const scoreCellStyle = `${baseCell} text-slate-500 font-mono text-right`;
 
   return (
     <div
       draggable={expanded}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
-      onDoubleClick={toggleExpand} // Changed from onClick to onDoubleClick
+      onDoubleClick={toggleExpand}
       className={`
-        grid grid-cols-12 gap-4 border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer
+        border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer group
         ${expanded ? 'bg-white shadow-lg ring-1 ring-slate-200 relative z-10 my-2 rounded-lg' : 'bg-white'}
         ${expanded ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer'}
       `}
     >
-      {/* preceding */}
-      <div className={`col-span-1 ${textCellStyle} text-slate-500`}>
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">Before</span>
-        {row.preceding}
-      </div>
-
-      {/* target */}
-      <div className={`col-span-3 ${textCellStyle} font-medium text-slate-900`}>
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">Target</span>
-        {row.target}
-      </div>
-
-      {/* following */}
-      <div className={`col-span-1 ${textCellStyle} text-slate-500`}>
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">After</span>
-        {row.following}
-      </div>
-
-      {/* LLM Justification */}
-      <div className={`col-span-2 ${textCellStyle} text-slate-600`}>
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">LLM Justification</span>
-        {row.llm_justification || <span className="text-slate-300 italic">-</span>}
-      </div>
-
-      {/* LLM Evidence Quote */}
-      <div className={`col-span-2 ${textCellStyle} text-slate-600 italic`}>
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">LLM Evidence</span>
-        {row.llm_evidence_quote ? `"${row.llm_evidence_quote}"` : <span className="text-slate-300 italic">-</span>}
-      </div>
-
-      {/* Expert Opinion (Editable) */}
+      {/* The Grid Container 
+         We apply the dynamic style here to the INNER container.
+      */}
       <div 
-        className={`col-span-2 ${textCellStyle} text-slate-600 ${expanded ? 'cursor-text hover:bg-blue-50/50 rounded' : ''}`}
-        onClick={(e) => {
-            // Enable edit on single click if expanded
-            if (expanded) {
-                e.stopPropagation(); 
-                setIsEditingOpinion(true);
-            }
-        }}
-        onDoubleClick={(e) => {
-            // Prevent double-click from collapsing the row when interacting with this cell
-            if (expanded) {
-                e.stopPropagation();
-            }
-        }}
+        className="grid items-start" 
+        style={{ gridTemplateColumns }}
       >
-        <span className="font-semibold text-slate-900 block mb-1 text-xs uppercase tracking-wider opacity-50 md:hidden">Expert Opinion</span>
-        
-        {expanded && isEditingOpinion ? (
-            <textarea
-                ref={textareaRef}
-                value={opinionText}
-                onChange={(e) => setOpinionText(e.target.value)}
-                onBlur={handleSaveOpinion}
-                onKeyDown={handleOpinionKeyDown}
-                onClick={(e) => e.stopPropagation()} // Stop propagation to prevent row interactions
-                className="w-full p-2 bg-white border border-blue-400 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-slate-800"
-                rows={3}
-            />
-        ) : (
-            row.expert_opinion || <span className="text-slate-300 italic">-</span>
-        )}
-      </div>
+        {/* preceding */}
+        <div className={`${textCellStyle} text-slate-500`}>
+          {row.preceding}
+        </div>
 
-      {/* A Score (Combined) */}
-      <div className={`col-span-1 ${scoreCellStyle} font-bold text-slate-600`}>
-         {expanded && <div className="text-[10px] text-slate-300 uppercase">Score</div>}
-         <span>{row.A1_Score},{row.A2_Score},{row.A3_Score}</span>
+        {/* target */}
+        <div className={`${textCellStyle} font-medium text-slate-900`}>
+          {row.target}
+        </div>
+
+        {/* following */}
+        <div className={`${textCellStyle} text-slate-500`}>
+          {row.following}
+        </div>
+
+        {/* LLM Justification */}
+        <div className={`${textCellStyle} text-slate-600`}>
+          {row.llm_justification || <span className="text-slate-300 italic">-</span>}
+        </div>
+
+        {/* LLM Evidence Quote */}
+        <div className={`${textCellStyle} text-slate-600 italic`}>
+          {row.llm_evidence_quote ? `"${row.llm_evidence_quote}"` : <span className="text-slate-300 italic">-</span>}
+        </div>
+
+        {/* Expert Opinion (Editable) */}
+        <div 
+          className={`${textCellStyle} text-slate-600 ${expanded ? 'cursor-text hover:bg-blue-50/50 rounded' : ''}`}
+          onClick={(e) => {
+              if (expanded) {
+                  e.stopPropagation(); 
+                  setIsEditingOpinion(true);
+              }
+          }}
+          onDoubleClick={(e) => {
+              if (expanded) {
+                  e.stopPropagation();
+              }
+          }}
+        >
+          {expanded && isEditingOpinion ? (
+              <textarea
+                  ref={textareaRef}
+                  value={opinionText}
+                  onChange={(e) => setOpinionText(e.target.value)}
+                  onBlur={handleSaveOpinion}
+                  onKeyDown={handleOpinionKeyDown}
+                  onClick={(e) => e.stopPropagation()}
+                  className="w-full p-2 bg-white border border-blue-400 rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-100 text-slate-800"
+                  rows={3}
+              />
+          ) : (
+              row.expert_opinion || <span className="text-slate-300 italic">-</span>
+          )}
+        </div>
+
+        {/* A Score */}
+        <div className={scoreCellStyle}>
+           {expanded && <div className="text-[10px] text-slate-300 uppercase mb-1">Score</div>}
+           <span>{row.A1_Score},{row.A2_Score},{row.A3_Score}</span>
+        </div>
       </div>
       
+      {/* Expanded Footer Actions */}
       {expanded && (
-        <div className="col-span-12 px-4 pb-2 flex justify-end">
+        <div className="px-4 pb-2 flex justify-end">
           <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded">
             Drag to reassign | Double-click to collapse
           </span>

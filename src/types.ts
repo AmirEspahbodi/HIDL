@@ -1,5 +1,5 @@
 export interface DataRow {
-  id: number;
+  id: string;
   preceding: string;
   target: string;
   following: string;

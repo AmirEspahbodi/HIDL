@@ -67,8 +67,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setDragOverId(null);
     const rowId = e.dataTransfer.getData("text/plain");
     if (rowId) {
-      // rowId comes from drag event as string, parse to int
-      onDropRow(parseInt(rowId, 10), targetId);
+      onDropRow(rowId, targetId); 
     }
   };
 
