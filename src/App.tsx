@@ -5,7 +5,7 @@ import { DataRowItem } from './components/DataRowItem';
 import { ResizeHandle } from './components/ResizeHandle';
 import { useColumnResizer, ColumnConfig } from './hooks/useColumnResizer';
 import initialPrinciples from './principles.json';
-import initialSamples from './samples.json';
+import initialSamples from './_prompt_type1_without_example_samples.json';
 import { Principle, DataRow } from './types';
 
 // Initial Layout Definition (approximate pixels based on previous col-spans)

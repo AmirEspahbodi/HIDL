@@ -24,7 +24,7 @@ dist-ssr
 *.sw?
 
 
-samples.json
-**/samples.json
+*samples.json
+**/*samples.json
 principles.json
 **/principles.json
