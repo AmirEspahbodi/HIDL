@@ -99,20 +99,6 @@ Body: {
   exclusion_criteria?: string;
 }
 Response: Principle
-
-// Create principle
-POST /api/principles
-Body: {
-  label_name: string;
-  definition: string;
-  inclusion_criteria: string;
-  exclusion_criteria: string;
-}
-Response: Principle
-
-// Delete principle
-DELETE /api/principles/:id
-Response: { success: boolean }
 ```
 
 #### Data Rows API
@@ -127,76 +113,8 @@ PUT /api/data-rows/:id
 Body: {
   principle_id?: number;
   expert_opinion?: string;
-  A1_Score?: number;
-  A2_Score?: number;
-  A3_Score?: number;
 }
 Response: DataRow
-
-// Bulk reassign rows
-POST /api/data-rows/bulk-reassign
-Body: {
-  row_ids: string[];
-  target_principle_id: number;
-}
-Response: { updated: number }
-```
-
-#### AI Integration API
-
-```typescript
-// Generate LLM justification for a data row
-POST /api/ai/generate-justification
-Body: {
-  row_id: string;
-  principle_id: number;
-  context: {
-    preceding: string;
-    target: string;
-    following: string;
-  }
-}
-Response: {
-  justification: string;
-  evidence_quote: string;
-  confidence: number;
-}
-
-// Batch process multiple rows
-POST /api/ai/batch-process
-Body: {
-  row_ids: string[];
-  principle_id: number;
-}
-Response: {
-  processed: number;
-  results: Array<{
-    row_id: string;
-    justification: string;
-    evidence_quote: string;
-  }>
-}
-```
-
-#### Export API
-
-```typescript
-// Export annotated data
-GET /api/export?format=json|csv&principle_id=:id
-Response: File download
-
-// Get annotation statistics
-GET /api/statistics
-Response: {
-  total_rows: number;
-  annotated_rows: number;
-  principles: Array<{
-    id: number;
-    name: string;
-    row_count: number;
-    completion_rate: number;
-  }>
-}
 ```
 
 ### Data Types
