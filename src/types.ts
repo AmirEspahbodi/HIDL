@@ -7,10 +7,12 @@ export interface DataRow {
   A2_Score: number;
   A3_Score: number;
   principle_id: number;
-  // New columns
   llm_justification: string;
   llm_evidence_quote: string;
   expert_opinion: string;
+  isRevised: boolean;
+  reviserName: string | null;
+  revisionTimestamp?: string;
 }
 
 export interface Principle {
@@ -25,4 +27,12 @@ export interface AppState {
   principles: Principle[];
   data: DataRow[];
   selectedPrincipleId: number;
+}
+
+// Type for the revision action
+export interface RevisionUpdate {
+  rowId: string;
+  isRevised: boolean;
+  reviserName: string;
+  timestamp: string;
 }
