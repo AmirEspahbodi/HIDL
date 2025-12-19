@@ -3,10 +3,9 @@ import { DataRow } from "../types";
 
 interface DataRowItemProps {
   row: DataRow;
-  onUpdateExpertOpinion: (id: number, opinion: string) => void;
-  // Kept in interface to prevent breaking parent usage, even if unused in UI now
+  onUpdateExpertOpinion: (id: string, opinion: string) => void;
   onToggleRevision: (
-    id: number,
+    id: string,
     isRevised: boolean,
     reviserName: string,
   ) => void;
@@ -17,6 +16,8 @@ interface DataRowItemProps {
 export const DataRowItem: React.FC<DataRowItemProps> = ({
   row,
   onUpdateExpertOpinion,
+  onToggleRevision,
+  currentUserName,
   gridTemplateColumns,
 }) => {
   const [expanded, setExpanded] = useState(false);
@@ -68,6 +69,13 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({
     }
   };
 
+  const handleRevisionToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!row.isRevised) {
+      onToggleRevision(row.id, true, currentUserName);
+    }
+  };
+
   // Styles
   const baseCell =
     "px-4 py-3 text-sm transition-all duration-300 border-r border-transparent";
@@ -83,21 +91,14 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({
     const baseClasses =
       "border-b border-slate-100 transition-colors cursor-pointer group";
 
-    // 1. Determine Background Color (Green takes priority if Revised)
-    // If revised: Green. If not: White.
     const bgColor = row.isRevised
       ? "bg-green-50 hover:bg-green-100"
       : "bg-white hover:bg-slate-50";
 
-    // 2. Determine Shape/Layout (Expanded vs Collapsed)
     if (expanded) {
-      // When expanded, we keep the background determined above (green or white)
-      // but add shadows, margins, and roundness.
-      // Note: We deliberately do NOT reset to 'bg-white' if revised.
       return `${baseClasses} ${bgColor} shadow-lg ring-1 ring-slate-200 relative z-10 my-2 rounded-lg cursor-grab active:cursor-grabbing`;
     }
 
-    // Default Collapsed State
     return `${baseClasses} ${bgColor} cursor-pointer`;
   };
 
@@ -182,15 +183,36 @@ export const DataRowItem: React.FC<DataRowItemProps> = ({
             {row.A1_Score},{row.A2_Score},{row.A3_Score}
           </span>
         </div>
-
-        {/* STATUS COLUMN REMOVED HERE */}
       </div>
 
       {/* Expanded Footer Actions */}
       {expanded && (
-        <div className="px-4 pb-2 flex justify-between items-center">
-          <div className="text-xs text-green-700">
-            {row.isRevised && <span>✓ Revised by {row.reviserName}</span>}
+        <div className="px-4 pb-3 pt-2 flex justify-between items-center border-t border-slate-100 mt-2">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={handleRevisionToggle}
+              disabled={row.isRevised}
+              className={`
+                px-4 py-2 rounded-lg font-medium text-sm transition-all duration-200
+                ${
+                  row.isRevised
+                    ? "bg-slate-200 text-slate-500 cursor-not-allowed"
+                    : "bg-green-500 text-white hover:bg-green-600 active:scale-95 shadow-sm hover:shadow-md"
+                }
+              `}
+            >
+              {row.isRevised ? "Revised" : "Set as Revised"}
+            </button>
+            {row.isRevised && (
+              <span className="text-xs text-slate-500">
+                by {row.reviserName}
+                {row.revisionTimestamp && (
+                  <span className="ml-1">
+                    on {new Date(row.revisionTimestamp).toLocaleDateString()}
+                  </span>
+                )}
+              </span>
+            )}
           </div>
 
           <span className="text-[10px] text-slate-400 bg-slate-100 px-2 py-1 rounded">

@@ -7,7 +7,7 @@ interface SidebarProps {
   selectedId: number;
   onSelect: (id: number) => void;
   onRename: (id: number, newName: string) => void;
-  onDropRow: (rowId: number, targetPrincipleId: number) => void;
+  onDropRow: (rowId: string, targetPrincipleId: number) => void;
   width: number;
   isCollapsed: boolean;
   isResizing: boolean;

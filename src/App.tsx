@@ -26,9 +26,12 @@ const DEFAULT_COLUMNS: ColumnConfig[] = [
 ];
 
 interface HistoryAction {
-  rowId: number;
+  rowId: string;
   fromPrincipleId: number;
   toPrincipleId: number;
+  wasRevised: boolean;
+  reviserName: string | null;
+  revisionTimestamp?: string;
 }
 
 const MAX_HISTORY_SIZE = 50;
@@ -94,10 +97,18 @@ const App: React.FC = () => {
         setHistory((currentHistory) => {
           if (currentHistory.length === 0) return currentHistory;
           const lastAction = currentHistory[currentHistory.length - 1];
+
+          // Restore the row to its previous state
           setData((currentData) =>
             currentData.map((row) => {
               if (row.id === lastAction.rowId) {
-                return { ...row, principle_id: lastAction.fromPrincipleId };
+                return {
+                  ...row,
+                  principle_id: lastAction.fromPrincipleId,
+                  isRevised: lastAction.wasRevised,
+                  reviserName: lastAction.reviserName,
+                  revisionTimestamp: lastAction.revisionTimestamp,
+                };
               }
               return row;
             }),
@@ -138,15 +149,31 @@ const App: React.FC = () => {
     );
   };
 
-  const handleUpdateExpertOpinion = (rowId: number, newOpinion: string) => {
+  // Updated: Auto-mark as revised when expert opinion changes
+  const handleUpdateExpertOpinion = (rowId: string, newOpinion: string) => {
     setData((prev) =>
-      prev.map((row) =>
-        row.id === rowId ? { ...row, expert_opinion: newOpinion } : row,
-      ),
+      prev.map((row) => {
+        if (row.id === rowId) {
+          // Only mark as revised if opinion actually changed and new opinion is not empty
+          const shouldMarkRevised =
+            newOpinion !== row.expert_opinion && newOpinion.trim() !== "";
+
+          return {
+            ...row,
+            expert_opinion: newOpinion,
+            isRevised: shouldMarkRevised ? true : row.isRevised,
+            reviserName: shouldMarkRevised ? currentUserName : row.reviserName,
+            revisionTimestamp: shouldMarkRevised
+              ? new Date().toISOString()
+              : row.revisionTimestamp,
+          };
+        }
+        return row;
+      }),
     );
   };
 
-  // New handler for revision toggle
+  // Handler for manual revision toggle
   const handleToggleRevision = (
     rowId: string,
     isRevised: boolean,
@@ -170,17 +197,22 @@ const App: React.FC = () => {
     // await updateRevisionStatus(rowId, isRevised, reviserName);
   };
 
+  // Updated: Auto-mark as revised when principle changes
   const handleDropRow = (rowId: string, targetPrincipleId: number) => {
     if (targetPrincipleId === selectedPrincipleId) return;
 
     const row = data.find((r) => r.id === rowId);
 
     if (row && row.principle_id !== targetPrincipleId) {
+      // Save to history with current revision state
       setHistory((prev) => {
         const newAction: HistoryAction = {
           rowId,
           fromPrincipleId: row.principle_id,
           toPrincipleId: targetPrincipleId,
+          wasRevised: row.isRevised,
+          reviserName: row.reviserName,
+          revisionTimestamp: row.revisionTimestamp,
         };
         const newHistory = [...prev, newAction];
         if (newHistory.length > MAX_HISTORY_SIZE) {
@@ -188,12 +220,22 @@ const App: React.FC = () => {
         }
         return newHistory;
       });
+
+      // Update row and mark as revised
+      setData((prev) =>
+        prev.map((r) =>
+          r.id === rowId
+            ? {
+                ...r,
+                principle_id: targetPrincipleId,
+                isRevised: true,
+                reviserName: currentUserName,
+                revisionTimestamp: new Date().toISOString(),
+              }
+            : r,
+        ),
+      );
     }
-    setData((prev) =>
-      prev.map((row) =>
-        row.id === rowId ? { ...row, principle_id: targetPrincipleId } : row,
-      ),
-    );
   };
 
   return (
